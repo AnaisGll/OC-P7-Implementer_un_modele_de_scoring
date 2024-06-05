@@ -75,7 +75,3 @@ jobs:
         with:
           app-name: 'pret-a-depenser'
           slot-name: 'Production'
-
-      - name: Run Streamlit
-        run: |
-          streamlit run app.py --server.port 8000
