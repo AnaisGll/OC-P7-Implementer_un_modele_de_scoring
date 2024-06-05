@@ -78,4 +78,4 @@ jobs:
 
      - name: Run Streamlit
         run: |
-          streamlit run app.py --server.port ${{ secrets.PORT }}
+          streamlit run app.py --server.port 8000
