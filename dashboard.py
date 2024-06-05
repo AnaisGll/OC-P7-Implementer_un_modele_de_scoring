@@ -40,7 +40,7 @@ def request_prediction(model_uri, data):
 def main():
     #local
     #API_URL = 'http://127.0.0.1:5000/invocations'
-    API_URL = 'pret-a-depenser.azurewebsites.net'
+    API_URL = 'https://pret-a-depenser.azurewebsites.net'
 
     st.title("Prédiction de remboursement de prêt")
 
