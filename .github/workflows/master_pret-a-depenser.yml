@@ -75,3 +75,7 @@ jobs:
         with:
           app-name: 'pret-a-depenser'
           slot-name: 'Production'
+
+      - name: Start Streamlit Dashboard
+        run: |
+          nohup streamlit run dashboard.py &
