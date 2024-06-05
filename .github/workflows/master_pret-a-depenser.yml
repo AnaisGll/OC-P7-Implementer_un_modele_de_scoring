@@ -33,12 +33,10 @@ jobs:
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Run API tests
         run: |
-          source venv/bin/activate
           python -m unittest discover -s tests -p "test_api.py"
 
       - name: Run Dashboard tests
         run: |
-          source venv/bin/activate
           python -m unittest discover -s tests -p "test_dashboard.py"
             
       - name: Zip artifact for deployment
