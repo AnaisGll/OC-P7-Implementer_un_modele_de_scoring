@@ -42,7 +42,7 @@ Markdown==3.6
 MarkupSafe==2.1.5
 matplotlib==3.7.5
 mdurl==0.1.2
-mlflow==2.13.0
+mlflow==2.13.2
 numba==0.58.1
 numpy==1.24.4
 opentelemetry-api==1.24.0
@@ -78,7 +78,7 @@ tenacity==8.3.0
 threadpoolctl==3.5.0
 toml==0.10.2
 toolz==0.12.1
-tornado==6.4
+tornado==6.4.1
 tqdm==4.66.4
 typing_extensions==4.12.0
 tzdata==2024.1
