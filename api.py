@@ -5,8 +5,8 @@ import pandas as pd
 app = Flask(__name__)
 
 # Charger les données et la pipeline
-test_data = pd.read_csv('test_mean_imputed.csv')
-train_data = pd.read_csv('train_mean_imputed.csv')
+test_data = pd.read_csv('test_mean_sample.csv')
+train_data = pd.read_csv('train_mean_sample.csv')
 pipeline = joblib.load('pipeline_LGBM_prediction.joblib')
 
 # Ajouter la colonne client_id
