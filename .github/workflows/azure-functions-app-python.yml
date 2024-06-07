@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Make startup.sh executable
+        run: chmod +x startup.sh
+      
       - name: Run API tests
         run: pytest test_api.py
 
