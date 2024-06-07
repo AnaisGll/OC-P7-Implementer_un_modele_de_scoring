@@ -8,12 +8,14 @@ API_URL = 'https://pret-a-depenser.azurewebsites.net'
 
 def get_prediction(client_id):
     data = {"client_id": client_id}
-    response = requests.post(f"{API_URL}/prediction", json=data)
-    if response.status_code == 200:
-        return response.json().get("prediction")
-    else:
-        st.error(f"Erreur lors de l'obtention de la prédiction: {response.text}")
+    try:
+        response = requests.post(f"{API_URL}/prediction", json=data)
+        response.raise_for_status()  # Lève une exception pour les statuts d'erreur HTTP
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur lors de l'obtention de la prédiction: {e}")
         return None
+
+    return response.json().get("prediction")
 
 def main():
     st.title("Prédiction de remboursement de prêt")
@@ -26,6 +28,8 @@ def main():
         prediction = get_prediction(client_id)
         if prediction is not None:
             st.write(f"La probabilité de défaut de prêt pour le client {client_id} est de {prediction:.2f}")
+        else:
+            st.write("Aucune prédiction n'a pu être obtenue.")
 
 if __name__ == '__main__':
     main()
