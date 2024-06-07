@@ -2,7 +2,6 @@ import pytest
 import requests
 from dashboard import get_prediction
 
-# Mocking the API response for testing purposes
 def test_get_prediction(monkeypatch):
     # Simulation d'une réponse réussie de l'API
     def mock_post_success(*args, **kwargs):
@@ -15,6 +14,10 @@ def test_get_prediction(monkeypatch):
             def json(self):
                 return self.json_data
 
+            def raise_for_status(self):
+                if self.status_code != 200:
+                    raise requests.exceptions.HTTPError(f"{self.status_code} Error")
+                    
         return MockResponse(200, {"prediction": 0.75})
 
     monkeypatch.setattr(requests, 'post', mock_post_success)
@@ -22,16 +25,26 @@ def test_get_prediction(monkeypatch):
     # Test de récupération de prédiction réussie
     assert get_prediction(123) == 0.75
 
-    # Simulation d'une réponse d'erreur de l'API
-    def mock_post_error(*args, **kwargs):
+    #  Simulation d'une réponse échouée de l'API
+    def mock_post_failure(*args, **kwargs):
         class MockResponse:
-            def __init__(self, status_code, text):
+            def __init__(self, status_code, json_data):
                 self.status_code = status_code
-                self.text = text
+                self.json_data = json_data
 
-        return MockResponse(404, "Client ID not found")
+            def json(self):
+                return self.json_data
+            
+            def raise_for_status(self):
+                if self.status_code != 200:
+                    raise requests.exceptions.HTTPError(f"{self.status_code} Error")
 
-    monkeypatch.setattr(requests, 'post', mock_post_error)
+        return MockResponse(400, {"error": "Invalid request"})
 
-    # Test de la gestion des erreurs
-    assert get_prediction(456) is None
+    monkeypatch.setattr(requests, 'post', mock_post_failure)
+
+    # Test de récupération de prédiction échouée
+    assert get_prediction(123) is None
+
+if __name__ == '__main__':
+    pytest.main()
