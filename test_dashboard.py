@@ -31,8 +31,8 @@ def test_get_client_data(monkeypatch):
 
     monkeypatch.setattr(requests, 'get', mock_get_success)
     client_data = get_client_data(123)
-    assert client_data['client_id'] == 123
-    assert client_data['feature1'] == 10
+    assert client_data['client_id'][0] == 123
+    assert client_data['feature1'][0] == 10
 
     # Mock failed API response
     def mock_get_failure(*args, **kwargs):
@@ -41,6 +41,7 @@ def test_get_client_data(monkeypatch):
     monkeypatch.setattr(requests, 'get', mock_get_failure)
     client_data = get_client_data(123)
     assert client_data is None
+
 
 if __name__ == '__main__':
     pytest.main()
