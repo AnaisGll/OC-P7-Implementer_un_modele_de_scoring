@@ -27,10 +27,10 @@ class MockResponse:
 def test_get_client_data(monkeypatch):
     # Mock successful API response
     def mock_get_success(*args, **kwargs):
-        return MockResponse(200, True)
+        return MockResponse(200, test_data.to_dict())
 
     monkeypatch.setattr(requests, 'get', mock_get_success)
-    client_data = get_client_data(123, test_data)  # Pass test_data as the second argument
+    client_data = get_client_data(123)
     assert client_data['client_id'] == 123
     assert client_data['feature1'] == 10
 
@@ -39,27 +39,7 @@ def test_get_client_data(monkeypatch):
         return MockResponse(404, False)
 
     monkeypatch.setattr(requests, 'get', mock_get_failure)
-    client_data = get_client_data(123, test_data)  # Pass test_data as the second argument
-    assert client_data is None
-
-
-# Test get_client_data function
-def test_get_client_data(monkeypatch):
-    # Mock successful API response
-    def mock_get_success(*args, **kwargs):
-        return MockResponse(200, True)
-
-    monkeypatch.setattr(requests, 'get', mock_get_success)
-    client_data = get_client_data(123, test_data)
-    assert client_data['client_id'] == 123
-    assert client_data['feature1'] == 10
-
-    # Mock failed API response
-    def mock_get_failure(*args, **kwargs):
-        return MockResponse(404, False)
-
-    monkeypatch.setattr(requests, 'get', mock_get_failure)
-    client_data = get_client_data(123, test_data)
+    client_data = get_client_data(123)
     assert client_data is None
 
 if __name__ == '__main__':
