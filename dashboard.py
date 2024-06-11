@@ -7,6 +7,11 @@ import plotly.express as px
 # URL de l'API déployée
 API_URL = 'https://pret-a-depenser.azurewebsites.net'
 
+
+# Charger les données 
+test_data = pd.read_csv('test_mean_sample.csv')
+train_data = pd.read_csv('train_mean_sample.csv')
+
 def get_prediction(client_id):
     data = {"client_id": client_id}
     try:
