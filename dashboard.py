@@ -7,11 +7,6 @@ import plotly.express as px
 # URL de l'API déployée
 API_URL = 'https://pret-a-depenser.azurewebsites.net'
 
-
-# Charger les données 
-test_data = pd.read_csv('test_mean_sample.csv')
-train_data = pd.read_csv('train_mean_sample.csv')
-
 def get_prediction(client_id):
     data = {"client_id": client_id}
     try:
@@ -21,12 +16,12 @@ def get_prediction(client_id):
     except requests.exceptions.HTTPError:
         return None
 
-def get_client_data(client_id, test_data):
+def get_client_data(client_id):
     try:
         response = requests.get(f"{API_URL}/check_client/{client_id}")
         response.raise_for_status()
         if response.json():
-            return test_data[test_data['client_id'] == client_id].to_dict(orient='records')[0]
+            return response.json()
         else:
             return None
     except requests.exceptions.HTTPError:
@@ -39,7 +34,7 @@ def main():
     client_id = st.sidebar.number_input("Entrez l'ID du client", min_value=1, step=1)
     
     if st.sidebar.button("Obtenir les informations du client"):
-        client_data = get_client_data(client_id, test_data)
+        client_data = get_client_data(client_id)
         
         if client_data:
             st.write(f"**Informations du Client {client_id}**")
@@ -61,12 +56,12 @@ def main():
             st.plotly_chart(fig)
             
             st.write(f"**Comparaison avec d'autres clients**")
-            feature = st.selectbox("Choisissez une variable pour comparer", options=test_data.columns)
+            feature = st.selectbox("Choisissez une variable pour comparer", options=client_data['features'])
             
-            fig = px.histogram(test_data, x=feature, title=f"Distribution de {feature} parmi tous les clients")
+            fig = px.histogram(client_data['data'], x=feature, title=f"Distribution de {feature} parmi tous les clients")
             st.plotly_chart(fig)
             
-            fig = px.histogram(test_data[test_data['client_id'] == client_id], x=feature, title=f"Valeur de {feature} pour le client {client_id}")
+            fig = px.histogram(client_data['data'][client_data['data']['client_id'] == client_id], x=feature, title=f"Valeur de {feature} pour le client {client_id}")
             st.plotly_chart(fig)
         else:
             st.error("Client non trouvé")
