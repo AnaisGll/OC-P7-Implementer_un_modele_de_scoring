@@ -1,5 +1,6 @@
 import pytest
 import requests
+import pandas as pd
 from dashboard import get_prediction, get_client_data
 
 # Mock data to simulate test dataset
