@@ -9,11 +9,14 @@ API_URL = 'https://pret-a-depenser.azurewebsites.net'
 
 def get_prediction(client_id):
     data = {"client_id": client_id}
-    response = requests.post(f"{API_URL}/prediction", json=data)
-    response.raise_for_status()
-    return response.json().get("prediction")
+    try:
+        response = requests.post(f"{API_URL}/prediction", json=data)
+        response.raise_for_status()
+        return response.json().get("prediction")
+    except requests.exceptions.HTTPError:
+        return None
 
-def get_client_data(client_id):
+def get_client_data(client_id, test_data):
     response = requests.get(f"{API_URL}/check_client/{client_id}")
     response.raise_for_status()
     if response.json():
