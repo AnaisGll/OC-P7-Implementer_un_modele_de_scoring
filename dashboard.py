@@ -17,11 +17,14 @@ def get_prediction(client_id):
         return None
 
 def get_client_data(client_id, test_data):
-    response = requests.get(f"{API_URL}/check_client/{client_id}")
-    response.raise_for_status()
-    if response.json():
-        return test_data[test_data['client_id'] == client_id].to_dict(orient='records')[0]
-    else:
+    try:
+        response = requests.get(f"{API_URL}/check_client/{client_id}")
+        response.raise_for_status()
+        if response.json():
+            return test_data[test_data['client_id'] == client_id].to_dict(orient='records')[0]
+        else:
+            return None
+    except requests.exceptions.HTTPError:
         return None
 
 def main():
@@ -31,7 +34,7 @@ def main():
     client_id = st.sidebar.number_input("Entrez l'ID du client", min_value=1, step=1)
     
     if st.sidebar.button("Obtenir les informations du client"):
-        client_data = get_client_data(client_id)
+        client_data = get_client_data(client_id, test_data)
         
         if client_data:
             st.write(f"**Informations du Client {client_id}**")
@@ -65,4 +68,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
