@@ -23,21 +23,25 @@ class MockResponse:
         if self.status_code != 200:
             raise requests.exceptions.HTTPError(f"{self.status_code} Error")
 
-# Test get_prediction function
-def test_get_prediction(monkeypatch):
+# Test get_client_data function
+def test_get_client_data(monkeypatch):
     # Mock successful API response
-    def mock_post_success(*args, **kwargs):
-        return MockResponse(200, {"prediction": 0.75})
+    def mock_get_success(*args, **kwargs):
+        return MockResponse(200, True)
 
-    monkeypatch.setattr(requests, 'post', mock_post_success)
-    assert get_prediction(123) == 0.75
+    monkeypatch.setattr(requests, 'get', mock_get_success)
+    client_data = get_client_data(123, test_data)  # Pass test_data as the second argument
+    assert client_data['client_id'] == 123
+    assert client_data['feature1'] == 10
 
     # Mock failed API response
-    def mock_post_failure(*args, **kwargs):
-        return MockResponse(400, {"error": "Invalid request"})
+    def mock_get_failure(*args, **kwargs):
+        return MockResponse(404, False)
 
-    monkeypatch.setattr(requests, 'post', mock_post_failure)
-    assert get_prediction(123) is None
+    monkeypatch.setattr(requests, 'get', mock_get_failure)
+    client_data = get_client_data(123, test_data)  # Pass test_data as the second argument
+    assert client_data is None
+
 
 # Test get_client_data function
 def test_get_client_data(monkeypatch):
