@@ -46,7 +46,7 @@ def test_get_client_data(monkeypatch):
         return MockResponse(200, True)
 
     monkeypatch.setattr(requests, 'get', mock_get_success)
-    client_data = get_client_data(123)
+    client_data = get_client_data(123, test_data)
     assert client_data['client_id'] == 123
     assert client_data['feature1'] == 10
 
@@ -55,9 +55,10 @@ def test_get_client_data(monkeypatch):
         return MockResponse(404, False)
 
     monkeypatch.setattr(requests, 'get', mock_get_failure)
-    client_data = get_client_data(123)
+    client_data = get_client_data(123, test_data)
     assert client_data is None
 
 if __name__ == '__main__':
     pytest.main()
+
 
