@@ -1,37 +1,51 @@
 import pytest
-from unittest.mock import patch
-from dashboard import get_prediction, jauge_score, plot_client_features
+import requests
+from dashboard import get_prediction
 
-# Mock des réponses de l'API
-mock_api_response = {
-    "prediction": 0.7
-}
+def test_get_prediction(monkeypatch):
+    # Simulation d'une réponse réussie de l'API
+    def mock_post_success(*args, **kwargs):
+        # classe MockResponse qui simule la réponse de l'API
+        class MockResponse:
+            def __init__(self, status_code, json_data):
+                self.status_code = status_code
+                self.json_data = json_data
 
-@pytest.mark.parametrize("client_id, expected_proba_default, expected_decision", [
-    (1, 0.7, "Refusé"),
-    (2, None, None)
-])
-@patch("dashboard.requests.post")
-def test_get_prediction(mock_post, client_id, expected_proba_default, expected_decision):
-    # Configuration du mock de la réponse de l'API
-    mock_post.return_value.json.return_value = mock_api_response
+            def json(self):
+                return self.json_data
 
-    # Appel de la fonction get_prediction avec le client_id
-    proba_default, decision = get_prediction(client_id)
+            def raise_for_status(self):
+                if self.status_code != 200:
+                    raise requests.exceptions.HTTPError(f"{self.status_code} Error")
+                    
+        return MockResponse(200, {"prediction": 0.75})
 
-    # Vérification des résultats
-    assert proba_default == expected_proba_default
-    assert decision == expected_decision
+    monkeypatch.setattr(requests, 'post', mock_post_success)
 
-def test_jauge_score():
-    # Pas de véritable test pour cette fonction, car elle ne retourne pas de valeur mais appelle plotly_chart
-    pass
+    # Test de récupération de prédiction réussie
+    assert get_prediction(123) == 0.75
 
-def test_plot_client_features():
-    # À implémenter en fonction des tests nécessaires pour la fonction plot_client_features
-    pass
+    #  Simulation d'une réponse échouée de l'API
+    def mock_post_failure(*args, **kwargs):
+        class MockResponse:
+            def __init__(self, status_code, json_data):
+                self.status_code = status_code
+                self.json_data = json_data
 
+            def json(self):
+                return self.json_data
+            
+            def raise_for_status(self):
+                if self.status_code != 200:
+                    raise requests.exceptions.HTTPError(f"{self.status_code} Error")
+
+        return MockResponse(400, {"error": "Invalid request"})
+
+    monkeypatch.setattr(requests, 'post', mock_post_failure)
+
+    # Test de récupération de prédiction échouée
+    assert get_prediction(123) is None
+
+if __name__ == '__main__':
     pytest.main()
-
-
 
