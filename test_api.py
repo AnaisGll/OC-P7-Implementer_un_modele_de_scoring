@@ -12,7 +12,7 @@ def test_home(client):
     """Test de la route racine."""
     response = client.get('/')
     assert response.status_code == 200
-    assert b'API pour prédire l\'accord d\'un prêt' in response.data
+    assert b'API pour prédire l\'accord d\'un prêt'.encode() in response.data
 
 def test_check_client_id_exist(client):
     """Test de la recherche d'un client existant."""
