@@ -1,49 +1,36 @@
 import pytest
-import requests
-import pandas as pd
-from dashboard import get_prediction, get_client_data
+from unittest.mock import patch
+from dashboard import get_prediction, jauge_score, plot_client_features
 
-# Mock data to simulate test dataset
-test_data = pd.DataFrame({
-    'client_id': [123, 456, 789],
-    'feature1': [10, 20, 30],
-    'feature2': [100, 200, 300]
-})
+# Mock des réponses de l'API
+mock_api_response = {
+    "prediction": 0.7
+}
 
-# Mock response class for requests
-class MockResponse:
-    def __init__(self, status_code, json_data):
-        self.status_code = status_code
-        self.json_data = json_data
+@pytest.mark.parametrize("client_id, expected_proba_default, expected_decision", [
+    (1, 0.7, "Refusé"),
+    (2, None, None)
+])
+@patch("dashboard.requests.post")
+def test_get_prediction(mock_post, client_id, expected_proba_default, expected_decision):
+    # Configuration du mock de la réponse de l'API
+    mock_post.return_value.json.return_value = mock_api_response
 
-    def json(self):
-        return self.json_data
+    # Appel de la fonction get_prediction avec le client_id
+    proba_default, decision = get_prediction(client_id)
 
-    def raise_for_status(self):
-        if self.status_code != 200:
-            raise requests.exceptions.HTTPError(f"{self.status_code} Error")
+    # Vérification des résultats
+    assert proba_default == expected_proba_default
+    assert decision == expected_decision
 
-# Test get_client_data function
-def test_get_client_data(monkeypatch):
-    # Mock successful API response
-    def mock_get_success(*args, **kwargs):
-        return MockResponse(200, test_data.to_dict())
+def test_jauge_score():
+    # Pas de véritable test pour cette fonction, car elle ne retourne pas de valeur mais appelle plotly_chart
+    pass
 
-    monkeypatch.setattr(requests, 'get', mock_get_success)
-    client_data = get_client_data(123)
-    assert client_data['client_id'][0] == 123
-    assert client_data['feature1'][0] == 10
+def test_plot_client_features():
+    # À implémenter en fonction des tests nécessaires pour la fonction plot_client_features
+    pass
 
-    # Mock failed API response
-    def mock_get_failure(*args, **kwargs):
-        return MockResponse(404, False)
-
-    monkeypatch.setattr(requests, 'get', mock_get_failure)
-    client_data = get_client_data(123)
-    assert client_data is None
-
-
-if __name__ == '__main__':
     pytest.main()
 
 
