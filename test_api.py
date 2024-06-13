@@ -14,22 +14,22 @@ def test_home(client):
     assert response.data.decode('utf-8') == "API pour prédire l'accord d'un prêt"
 
 def test_check_client_id_exists(client):
-    # Supposons que le client_id 1 existe dans les données test
     response = client.get('/check_client/1')
     assert response.status_code == 200
     assert response.json is True
 
 def test_check_client_id_not_exists(client):
-    # Supposons que le client_id 9999 n'existe pas dans les données test
     response = client.get('/check_client/9999')
     assert response.status_code == 200
     assert response.json is False
 
 def test_get_prediction(client):
-    # Supposons que le client_id 1 existe dans les données test
     response = client.post('/prediction', json={'client_id': 1})
     assert response.status_code == 200
     assert 'prediction' in response.json
+    prediction = response.json['prediction']
+    assert isinstance(prediction, (float, int))  # Vérifie si la prédiction est un nombre
+    assert 0 <= prediction <= 1  # Vérifie si la prédiction est dans une plage valide
 
 def test_get_prediction_no_client_id(client):
     response = client.post('/prediction', json={})
@@ -37,6 +37,19 @@ def test_get_prediction_no_client_id(client):
     assert response.json == {"error": "client_id is required"}
 
 def test_get_prediction_client_not_found(client):
-    # Supposons que le client_id 9999 n'existe pas dans les données test
     response = client.post('/prediction', json={'client_id': 9999})
     assert response.status_code == 404
+
+def test_get_shap_values(client):
+    response = client.post('/shap_values', json={'client_id': 1})
+    assert response.status_code == 200
+    assert 'shap_values' in response.json
+    assert 'base_value' in response.json
+    assert 'feature_names' in response.json
+    shap_values = response.json['shap_values']
+    base_value = response.json['base_value']
+    feature_names = response.json['feature_names']
+    assert isinstance(shap_values, list)
+    assert isinstance(base_value, (float, int))
+    assert isinstance(feature_names, list)
+
