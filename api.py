@@ -16,7 +16,11 @@ train_data['client_id'] = range(1, len(train_data) + 1)
 test_data['client_id'] = range(1, len(test_data) + 1)
 
 # Extraire le modèle LightGBM de la pipeline
-model = pipeline.named_steps['model']  # Assurez-vous que le modèle est nommé 'model' dans votre pipeline
+def extract_model_from_pipeline(pipeline):
+    # Assurez-vous que le modèle est nommé 'model' dans votre pipeline
+    return pipeline.named_steps['model']
+
+model = extract_model_from_pipeline(pipeline)
 
 # SHAP explainer
 explainer = shap.TreeExplainer(model)
@@ -84,4 +88,5 @@ def get_shap_values():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000, debug=True)
+
 
