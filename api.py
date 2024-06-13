@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
+import numpy as np
+import shap
 
 app = Flask(__name__)
 
@@ -12,6 +14,9 @@ pipeline = joblib.load('pipeline_LGBM_prediction.joblib')
 # Ajouter la colonne client_id
 train_data['client_id'] = range(1, len(train_data) + 1)
 test_data['client_id'] = range(1, len(test_data) + 1)
+
+# SHAP explainer
+explainer = shap.TreeExplainer(pipeline)
 
 @app.route('/')
 def home():
@@ -48,10 +53,31 @@ def get_prediction():
     prediction = pipeline.predict_proba(info_client)[0][1]
     return jsonify({"prediction": prediction})
 
+@app.route('/shap_values', methods=['POST'])
+def get_shap_values():
+    """
+    Retourne les valeurs SHAP pour un client spécifique.
+    :return: valeurs SHAP (list), base value (float), feature names (list).
+    """
+    data = request.get_json()
+    client_id = data.get('client_id')
+    if client_id is None:
+        return jsonify({"error": "client_id is required"}), 400
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    client_data = test_data[test_data['client_id'] == client_id]
+    if client_data.empty:
+        return jsonify({"error": "Client not found"}), 404
 
+    info_client = client_data.drop('client_id', axis=1)
+    shap_values = explainer.shap_values(info_client)[1]  # Assuming binary classification
+    base_value = explainer.expected_value[1]
+    feature_names = info_client.columns.tolist()
+    
+    return jsonify({
+        "shap_values": shap_values.tolist(),
+        "base_value": base_value,
+        "feature_names": feature_names
+    })
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000, debug=True)
