@@ -15,6 +15,10 @@ pipeline = joblib.load('pipeline_LGBM_prediction.joblib')
 train_data['client_id'] = range(1, len(train_data) + 1)
 test_data['client_id'] = range(1, len(test_data) + 1)
 
+# Convertir les données en float64
+test_data = test_data.astype('float64')
+train_data = train_data.astype('float64')
+
 # Extraire le modèle LightGBM de la pipeline
 def extract_model_from_pipeline(pipeline):
     # Assurez-vous que le modèle est nommé 'model' dans votre pipeline
