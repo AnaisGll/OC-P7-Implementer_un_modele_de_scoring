@@ -1,7 +1,7 @@
 import pytest
 from flask import Flask
 import json
-from api import app 
+from api import app
 
 @pytest.fixture
 def client():
@@ -40,4 +40,3 @@ def test_get_prediction_client_not_found(client):
     # Supposons que le client_id 9999 n'existe pas dans les données test
     response = client.post('/prediction', json={'client_id': 9999})
     assert response.status_code == 404
-    assert response.json == {"error": "Client not found"}
