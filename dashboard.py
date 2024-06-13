@@ -1,21 +1,28 @@
 import streamlit as st
 import pandas as pd
 import requests
+import plotly.express as px
+import plotly.graph_objects as go
 
-#local
-#API_URL = 'http://127.0.0.1:8000'
-API_URL = 'https://pret-a-depenser.azurewebsites.net'
+# Local API URL
+API_URL = 'http://127.0.0.1:8000'
 
 def get_prediction(client_id):
     data = {"client_id": client_id}
-    try:
-        response = requests.post(f"{API_URL}/prediction", json=data)
-        response.raise_for_status()  # Lève une exception pour les statuts d'erreur HTTP
-    except requests.exceptions.RequestException as e:
-        st.error(f"Erreur lors de l'obtention de la prédiction: {e}")
+    response = requests.post(f"{API_URL}/prediction", json=data)
+    if response.status_code == 200:
+        return response.json().get("prediction")
+    else:
+        st.error(f"Erreur lors de l'obtention de la prédiction: {response.text}")
         return None
 
-    return response.json().get("prediction")
+def get_client_info(client_id):
+    response = requests.get(f"{API_URL}/client_info/{client_id}")
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error(f"Erreur lors de l'obtention des informations du client: {response.text}")
+        return None
 
 def main():
     st.title("Prédiction de remboursement de prêt")
@@ -28,8 +35,26 @@ def main():
         prediction = get_prediction(client_id)
         if prediction is not None:
             st.write(f"La probabilité de défaut de prêt pour le client {client_id} est de {prediction:.2f}")
-        else:
-            st.write("Aucune prédiction n'a pu être obtenue.")
+            if prediction < 0.5:
+                st.success("Le prêt est probablement approuvé.")
+            else:
+                st.error("Le prêt est probablement refusé.")
+
+    # Afficher les informations descriptives du client
+    if client_id:
+        client_info = get_client_info(client_id)
+        if client_info:
+            st.subheader("Informations du client")
+            st.write(client_info)
+
+            # Graphiques comparatifs
+            st.subheader("Comparaison des informations du client avec les autres clients")
+            feature = st.selectbox("Sélectionnez une variable pour la comparaison", options=client_info.keys())
+            if feature:
+                train_data = pd.read_csv('train_mean_imputed.csv')  # Charger les données d'entraînement pour comparaison
+                fig = px.histogram(train_data, x=feature, title=f"Distribution de {feature}")
+                fig.add_vline(x=client_info[feature], line_dash="dash", line_color="red")
+                st.plotly_chart(fig)
 
 if __name__ == '__main__':
     main()
