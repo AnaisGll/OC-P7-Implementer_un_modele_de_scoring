@@ -3,6 +3,7 @@ import joblib
 import pandas as pd
 import numpy as np
 import shap
+import lightgbm as lgb
 
 app = Flask(__name__)
 
@@ -19,10 +20,13 @@ test_data['client_id'] = range(1, len(test_data) + 1)
 test_data = test_data.astype('float64')
 train_data = train_data.astype('float64')
 
-# Extraire le modèle LightGBM de la pipeline
 def extract_model_from_pipeline(pipeline):
-    # Assurez-vous que le modèle est nommé 'model' dans votre pipeline
-    return pipeline.named_steps['model']
+    # Assurez-vous que le modèle est correctement extrait
+    model = pipeline.named_steps['model']
+    if isinstance(model, lgb.LGBMClassifier) or isinstance(model, lgb.LGBMRegressor):
+        return model
+    else:
+        raise TypeError("Model in pipeline is not a LightGBM model")
 
 model = extract_model_from_pipeline(pipeline)
 
