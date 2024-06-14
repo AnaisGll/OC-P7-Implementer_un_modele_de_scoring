@@ -9,6 +9,9 @@ test_data = pd.read_csv('test_mean_sample.csv')
 train_data = pd.read_csv('train_mean_sample.csv')
 pipeline = joblib.load('pipeline_LGBM_prediction.joblib')
 
+# Extraire les noms des fonctionnalités attendues par le pipeline
+expected_features = train_data.drop(columns='client_id').columns.tolist()
+
 # Ajouter la colonne client_id
 train_data['client_id'] = range(1, len(train_data) + 1)
 test_data['client_id'] = range(1, len(test_data) + 1)
@@ -61,7 +64,10 @@ def get_prediction():
     if client_data.empty:
         return jsonify({"error": "Client not found"}), 404
 
-    info_client = client_data.drop('client_id', axis=1)
+    # Filtrer les colonnes inattendues
+    info_client = client_data.drop(columns=['client_id'])
+    info_client = info_client[expected_features]
+
     prediction = pipeline.predict_proba(info_client)[0][1]
     return jsonify({"prediction": prediction})
 
