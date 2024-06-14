@@ -9,9 +9,6 @@ test_data = pd.read_csv('test_mean_sample.csv')
 train_data = pd.read_csv('train_mean_sample.csv')
 pipeline = joblib.load('pipeline_LGBM_prediction.joblib')
 
-# Extraire les noms des fonctionnalités attendues par le pipeline
-expected_features = train_data.drop(columns='client_id').columns.tolist()
-
 # Ajouter la colonne client_id
 train_data['client_id'] = range(1, len(train_data) + 1)
 test_data['client_id'] = range(1, len(test_data) + 1)
@@ -36,22 +33,13 @@ def get_client_info(client_id):
 
 @app.route('/client_info/<int:client_id>', methods=['PUT'])
 def update_client_info(client_id):
-    global test_data  # Declare global before using test_data
+    global test_data  
     data = request.get_json()
     client_data = test_data[test_data['client_id'] == client_id]
     if client_data.empty:
         return jsonify({"error": "Client not found"}), 404
     test_data.loc[test_data['client_id'] == client_id, list(data.keys())] = list(data.values())
     return jsonify({"message": "Client information updated"}), 200
-
-@app.route('/client_info', methods=['POST'])
-def submit_new_client():
-    global test_data  # Declare global before using test_data
-    data = request.get_json()
-    new_client_id = max(test_data['client_id']) + 1
-    data['client_id'] = new_client_id
-    test_data = pd.concat([test_data, pd.DataFrame([data])], ignore_index=True)
-    return jsonify({"message": "New client submitted", "client_id": new_client_id}), 201
 
 @app.route('/prediction', methods=['POST'])
 def get_prediction():
