@@ -47,7 +47,7 @@ def submit_new_client():
     data = request.get_json()
     new_client_id = len(test_data) + 1
     data['client_id'] = new_client_id
-    test_data = test_data.append(data, ignore_index=True)
+    test_data = pd.concat([test_data, pd.DataFrame(data, index=[0])], ignore_index=True)
     return jsonify({
         "message": "New client submitted",
         "client_id": new_client_id
@@ -66,7 +66,7 @@ def get_prediction():
         return jsonify({"error": "Client not found"}), 404
 
     # Filtrer les colonnes inattendues
-    info_client = client_data.drop(columns=['client_id'])
+    info_client = client_data.drop('client_id', axis=1)
     prediction = pipeline.predict_proba(info_client)[0][1]
     return jsonify({"prediction": prediction})
 
