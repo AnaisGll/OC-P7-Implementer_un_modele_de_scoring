@@ -41,6 +41,19 @@ def update_client_info(client_id):
     test_data.loc[test_data['client_id'] == client_id, list(data.keys())] = list(data.values())
     return jsonify({"message": "Client information updated"}), 200
 
+@app.route('/client_info', methods=['POST'])
+def submit_new_client():
+    global test_data
+    data = request.get_json()
+    new_client_id = len(test_data) + 1
+    data['client_id'] = new_client_id
+    test_data = test_data.append(data, ignore_index=True)
+    return jsonify({
+        "message": "New client submitted",
+        "client_id": new_client_id
+    }), 201
+
+
 @app.route('/prediction', methods=['POST'])
 def get_prediction():
     data = request.get_json()
