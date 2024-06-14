@@ -4,7 +4,8 @@ import requests
 import plotly.express as px
 
 # Local API URL
-API_URL = 'http://127.0.0.1:8000'
+#API_URL = 'http://127.0.0.1:8000'
+API_URL = 'https://pret-a-depenser.azurewebsites.net'
 
 def get_prediction(client_id):
     data = {"client_id": client_id}
