@@ -9,11 +9,12 @@ API_URL = 'https://pret-a-depenser.azurewebsites.net'
 
 def get_prediction(client_id):
     data = {"client_id": client_id}
-    response = requests.post(f"{API_URL}/prediction", json=data)
-    if response.status_code == 200:
+    try:
+        response = requests.post(f"{API_URL}/prediction", json=data)
+        response.raise_for_status()
         return response.json().get("prediction")
-    else:
-        st.error(f"Erreur lors de l'obtention de la prédiction: {response.text}")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur lors de l'obtention de la prédiction: {e}")
         return None
 
 def get_client_info(client_id):
@@ -71,7 +72,7 @@ def main():
             st.subheader("Comparaison des informations du client avec les autres clients")
             feature = st.selectbox("Sélectionnez une variable pour la comparaison", options=client_info.keys())
             if feature:
-                train_data = pd.read_csv('train_mean_imputed.csv')
+                train_data = pd.read_csv('train_mean_sample.csv')
                 fig = px.histogram(train_data, x=feature, title=f"Distribution de {feature}")
                 fig.add_vline(x=float(client_info[feature]), line_dash="dash", line_color="red", annotation_text="Client")
                 st.plotly_chart(fig)
