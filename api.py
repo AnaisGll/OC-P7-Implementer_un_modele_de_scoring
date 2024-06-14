@@ -23,7 +23,7 @@ def check_client_id(client_id):
         return jsonify(True)
     else:
         return jsonify(False)
-        
+
 @app.route('/client_info/<int:client_id>', methods=['GET'])
 def get_client_info(client_id):
     client_data = test_data[test_data['client_id'] == client_id]
@@ -33,29 +33,25 @@ def get_client_info(client_id):
 
 @app.route('/client_info/<int:client_id>', methods=['PUT'])
 def update_client_info(client_id):
+    global test_data  # Declare global before using test_data
     data = request.get_json()
     client_data = test_data[test_data['client_id'] == client_id]
     if client_data.empty:
         return jsonify({"error": "Client not found"}), 404
-    global test_data
     test_data.loc[test_data['client_id'] == client_id, list(data.keys())] = list(data.values())
     return jsonify({"message": "Client information updated"}), 200
 
 @app.route('/client_info', methods=['POST'])
 def submit_new_client():
+    global test_data  # Declare global before using test_data
     data = request.get_json()
     new_client_id = max(test_data['client_id']) + 1
     data['client_id'] = new_client_id
-    global test_data
     test_data = pd.concat([test_data, pd.DataFrame([data])], ignore_index=True)
     return jsonify({"message": "New client submitted", "client_id": new_client_id}), 201
 
 @app.route('/prediction', methods=['POST'])
 def get_prediction():
-    """
-    Calcule la probabilité de défaut pour un client.
-    :return: probabilité de défaut (float).
-    """
     data = request.get_json()
     client_id = data.get('client_id')
     if client_id is None:
@@ -72,4 +68,5 @@ def get_prediction():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000, debug=True)
+
 
