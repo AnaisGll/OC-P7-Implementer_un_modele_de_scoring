@@ -67,8 +67,6 @@ def get_prediction():
 
     # Filtrer les colonnes inattendues
     info_client = client_data.drop(columns=['client_id'])
-    info_client = info_client[expected_features]
-
     prediction = pipeline.predict_proba(info_client)[0][1]
     return jsonify({"prediction": prediction})
 
