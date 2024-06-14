@@ -45,7 +45,8 @@ def submit_new_client():
     data = request.get_json()
     new_client_id = max(test_data['client_id']) + 1
     data['client_id'] = new_client_id
-    test_data.append(data, ignore_index=True)
+    global test_data
+    test_data = pd.concat([test_data, pd.DataFrame([data])], ignore_index=True)
     return jsonify({"message": "New client submitted", "client_id": new_client_id}), 201
     
 @app.route('/prediction', methods=['POST'])
