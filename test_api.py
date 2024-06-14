@@ -61,7 +61,7 @@ def test_submit_new_client(client):
     assert "client_id" in response.json
 
 def test_get_prediction(client):
-    existing_client_id = test_data['client_id'].iloc[0]
+    existing_client_id = int(test_data['client_id'].iloc[0])
     response = client.post('/prediction', json={'client_id': existing_client_id})
     assert response.status_code == 200
     assert 'prediction' in response.json
