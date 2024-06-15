@@ -77,6 +77,26 @@ def main():
                             st.success("Le prêt est approuvé.")
                         else:
                             st.error("Le prêt est refusé.")
+            # Affichage des SHAP values
+            st.subheader("SHAP Values")
+            shap_values = get_shap_values(client_id)
+            if shap_values:
+                st.write("Valeurs SHAP pour ce client :")
+                st.json(shap_values)
+                # Comparaison avec l'importance globale
+                st.subheader("Comparaison avec l'importance globale")
+                global_shap_values = explainer.shap_values(X_train_scaled)
+                avg_shap_values = {col: sum(abs(global_shap_values[:, i])) / len(global_shap_values) for i, col in enumerate(X_train.columns)}
+                client_avg_shap_values = {k: abs(v) for k, v in shap_values.items()}
+
+                comparison_df = pd.DataFrame({
+                    'Feature': list(avg_shap_values.keys()),
+                    'Global SHAP': list(avg_shap_values.values()),
+                    'Client SHAP': [client_avg_shap_values.get(k, 0) for k in avg_shap_values.keys()]
+                })
+
+                comparison_fig = px.bar(comparison_df, x='Feature', y=['Global SHAP', 'Client SHAP'], title='Comparaison des SHAP values')
+                st.plotly_chart(comparison_fig)
 
 if __name__ == '__main__':
     main()
