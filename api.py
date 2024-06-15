@@ -17,8 +17,8 @@ train_data['client_id'] = range(1, len(train_data) + 1)
 test_data['client_id'] = range(1, len(test_data) + 1)
 
 # Séparer les features et la target dans les données d'entraînement
-X_train = train_data.drop(['target', 'client_id'], axis=1)
-y_train = train_data['target']
+X_train = train_data.drop(['TARGET', 'client_id'], axis=1)
+y_train = train_data['TARGET']
 
 # Appliquer le scaler et SMOTE aux données d'entraînement
 scaler = StandardScaler()
