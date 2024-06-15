@@ -2,20 +2,37 @@ from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
 import shap
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
+from lightgbm import LGBMClassifier
 
 app = Flask(__name__)
 
-# Charger les données et la pipeline
+# Charger les données 
 test_data = pd.read_csv('test_mean_sample.csv')
 train_data = pd.read_csv('train_mean_sample.csv')
-pipeline = joblib.load('pipeline_LGBM_prediction.joblib')
 
 # Ajouter la colonne client_id
 train_data['client_id'] = range(1, len(train_data) + 1)
 test_data['client_id'] = range(1, len(test_data) + 1)
 
-# Créer un explainer SHAP
-explainer = shap.Explainer(pipeline)
+# Séparer les features et la target dans les données d'entraînement
+X_train = train_data.drop(['target', 'client_id'], axis=1)
+y_train = train_data['target']
+
+# Appliquer le scaler et SMOTE aux données d'entraînement
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+
+smote = SMOTE()
+X_train_resampled, y_train_resampled = smote.fit_resample(X_train_scaled, y_train)
+
+# Entraîner le modèle
+model = LGBMClassifier(n_estimators=100, max_depth=2, num_leaves=31, force_col_wise=True)
+model.fit(X_train_resampled, y_train_resampled)
+
+# Créer un explainer SHAP basé sur le modèle entraîné
+explainer = shap.Explainer(model, X_train_scaled)
 
 @app.route('/')
 def home():
@@ -71,7 +88,11 @@ def get_prediction():
 
     # Filtrer les colonnes inattendues
     info_client = client_data.drop('client_id', axis=1)
-    prediction = pipeline.predict_proba(info_client)[0][1]
+    
+    # Appliquer les transformations et prédire
+    info_client_scaled = scaler.transform(info_client)
+    prediction = model.predict_proba(info_client_scaled)[0][1]
+    
     return jsonify({"prediction": prediction})
 
 @app.route('/shap_values/<int:client_id>', methods=['GET'])
@@ -83,12 +104,15 @@ def get_shap_values(client_id):
     # Filtrer les colonnes inattendues
     info_client = client_data.drop('client_id', axis=1)
     
+    # Appliquer les transformations
+    info_client_scaled = scaler.transform(info_client)
+    
     # Obtenir les valeurs SHAP pour le client
-    shap_values = explainer(info_client)
+    shap_values = explainer(info_client_scaled)
     shap_values_dict = dict(zip(info_client.columns, shap_values.values[0]))
     
     return jsonify({"shap_values": shap_values_dict})
-    
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000, debug=True)
 
