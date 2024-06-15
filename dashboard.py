@@ -45,15 +45,16 @@ def main():
             st.write(f"La probabilité de défaut de prêt pour le client {client_id} est de {prediction:.2f}")
             st.progress(prediction)
             if prediction < 0.5:
-                st.success("Le prêt est probablement approuvé.")
+                st.success("Le prêt est approuvé.")
             else:
-                st.error("Le prêt est probablement refusé.")
+                st.error("Le prêt est refusé.")
 
     if client_id:
         client_info = get_client_info(client_id)
         if client_info:
             st.subheader("Informations du client")
-            st.json(client_info)
+            with st.expander("Voir/Masquer les informations du client"):
+                st.json(client_info)
 
             st.subheader("Modifier les informations du client")
             update_data = {k: st.text_input(k, str(v)) for k, v in client_info.items() if k != 'client_id'}
