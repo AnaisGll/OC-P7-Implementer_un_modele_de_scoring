@@ -13,6 +13,9 @@ pipeline = joblib.load('pipeline_LGBM_prediction.joblib')
 train_data['client_id'] = range(1, len(train_data) + 1)
 test_data['client_id'] = range(1, len(test_data) + 1)
 
+# Créer un explainer SHAP
+explainer = shap.Explainer(pipeline)
+
 @app.route('/')
 def home():
     return 'API pour prédire l\'accord d\'un prêt'
@@ -70,7 +73,21 @@ def get_prediction():
     prediction = pipeline.predict_proba(info_client)[0][1]
     return jsonify({"prediction": prediction})
 
-
+@app.route('/shap_values/<int:client_id>', methods=['GET'])
+def get_shap_values(client_id):
+    client_data = test_data[test_data['client_id'] == client_id]
+    if client_data.empty:
+        return jsonify({"error": "Client not found"}), 404
+    
+    # Filtrer les colonnes inattendues
+    info_client = client_data.drop('client_id', axis=1)
+    
+    # Obtenir les valeurs SHAP pour le client
+    shap_values = explainer(info_client)
+    shap_values_dict = dict(zip(info_client.columns, shap_values.values[0]))
+    
+    return jsonify({"shap_values": shap_values_dict})
+    
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000, debug=True)
 
