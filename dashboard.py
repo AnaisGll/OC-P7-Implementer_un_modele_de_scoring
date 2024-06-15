@@ -53,22 +53,11 @@ def main():
         client_info = get_client_info(client_id)
         if client_info:
             st.subheader("Informations du client")
-            with st.expander("Voir/Masquer les informations du client"):
+            with st.expander("Voir les informations du client"):
                 st.json(client_info)
 
             st.subheader("Modifier les informations du client")
             update_data = {k: st.text_input(k, str(v)) for k, v in client_info.items() if k != 'client_id'}
-            
-            if st.button('Mettre à jour les informations'):
-                if update_client_info(client_id, update_data):
-                    prediction = get_prediction(client_id)
-                    if prediction is not None:
-                        st.write(f"Nouvelle probabilité de défaut de prêt pour le client {client_id} est de {prediction:.2f}")
-                        st.progress(prediction)
-                        if prediction < 0.5:
-                            st.success("Le prêt est probablement approuvé.")
-                        else:
-                            st.error("Le prêt est probablement refusé.")
 
             st.subheader("Comparaison des informations du client avec les autres clients")
             feature = st.selectbox("Sélectionnez une variable pour la comparaison", options=client_info.keys())
@@ -77,6 +66,17 @@ def main():
                 fig = px.histogram(train_data, x=feature, title=f"Distribution de {feature}")
                 fig.add_vline(x=float(client_info[feature]), line_dash="dash", line_color="red", annotation_text="Client")
                 st.plotly_chart(fig)
+                
+            if st.button('Mettre à jour les informations'):
+                if update_client_info(client_id, update_data):
+                    prediction = get_prediction(client_id)
+                    if prediction is not None:
+                        st.write(f"Nouvelle probabilité de défaut de prêt pour le client {client_id} est de {prediction:.2f}")
+                        st.progress(prediction)
+                        if prediction < 0.5:
+                            st.success("Le prêt est approuvé.")
+                        else:
+                            st.error("Le prêt est refusé.")
 
 if __name__ == '__main__':
     main()
