@@ -108,7 +108,7 @@ def get_shap_values(client_id):
     info_client_scaled = scaler.transform(info_client)
     
     # Obtenir les valeurs SHAP pour le client
-    shap_values = explainer(info_client_scaled)
+    shap_values = explainer(info_client_scaled, check_additivity=False)
     shap_values_dict = dict(zip(info_client.columns, shap_values.values[0]))
     
     return jsonify({"shap_values": shap_values_dict})
