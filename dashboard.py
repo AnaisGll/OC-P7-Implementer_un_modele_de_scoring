@@ -33,7 +33,15 @@ def update_client_info(client_id, data):
     else:
         st.error(f"Erreur lors de la mise à jour des informations du client: {response.text}")
         return False
-
+        
+def get_shap_values(client_id):
+    response = requests.get(f"{API_URL}/shap_values/{client_id}")
+    if response.status_code == 200:
+        return response.json().get("shap_values")
+    else:
+        st.error(f"Erreur lors de l'obtention des valeurs SHAP: {response.text}")
+        return None
+        
 def main():
     st.title("Prédiction de remboursement de prêt")
 
@@ -77,6 +85,7 @@ def main():
                             st.success("Le prêt est approuvé.")
                         else:
                             st.error("Le prêt est refusé.")
+                            
             # Affichage des SHAP values
             st.subheader("SHAP Values")
             shap_values = get_shap_values(client_id)
@@ -85,18 +94,18 @@ def main():
                 st.json(shap_values)
                 # Comparaison avec l'importance globale
                 st.subheader("Comparaison avec l'importance globale")
-                global_shap_values = explainer.shap_values(X_train_scaled)
-                avg_shap_values = {col: sum(abs(global_shap_values[:, i])) / len(global_shap_values) for i, col in enumerate(X_train.columns)}
-                client_avg_shap_values = {k: abs(v) for k, v in shap_values.items()}
-
-                comparison_df = pd.DataFrame({
-                    'Feature': list(avg_shap_values.keys()),
-                    'Global SHAP': list(avg_shap_values.values()),
-                    'Client SHAP': [client_avg_shap_values.get(k, 0) for k in avg_shap_values.keys()]
-                })
-
-                comparison_fig = px.bar(comparison_df, x='Feature', y=['Global SHAP', 'Client SHAP'], title='Comparaison des SHAP values')
-                st.plotly_chart(comparison_fig)
+                response = requests.get(f"{API_URL}/global_shap_values")
+                if response.status_code == 200:
+                    global_shap_values = response.json().get("global_shap_values")
+                    comparison_df = pd.DataFrame({
+                        'Feature': list(global_shap_values.keys()),
+                        'Global SHAP': list(global_shap_values.values()),
+                        'Client SHAP': [shap_values.get(k, 0) for k in global_shap_values.keys()]
+                    })
+                    comparison_fig = px.bar(comparison_df, x='Feature', y=['Global SHAP', 'Client SHAP'], title='Comparaison des SHAP values')
+                    st.plotly_chart(comparison_fig)
+                else:
+                    st.error(f"Erreur lors de l'obtention des valeurs SHAP globales: {response.text}")
 
 if __name__ == '__main__':
     main()
