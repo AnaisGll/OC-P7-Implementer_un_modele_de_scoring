@@ -9,6 +9,21 @@ import matplotlib.pyplot as plt
 #API_URL = 'http://127.0.0.1:8000'
 API_URL = 'https://pret-a-depenser.azurewebsites.net'
 
+# Charger les données d'entraînement pour le SHAP explainer
+train_data = pd.read_csv('train_mean_sample.csv')
+X_train = train_data.drop(['TARGET', 'client_id'], axis=1)
+
+# Standardiser les données
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+
+# Entraîner un modèle pour le SHAP explainer (exemple)
+model = LGBMClassifier(n_estimators=100, max_depth=2, num_leaves=31, force_col_wise=True)
+model.fit(X_train_scaled, train_data['TARGET'])
+
+# Créer un explainer SHAP basé sur le modèle entraîné
+explainer = shap.Explainer(model, X_train_scaled)
+
 def get_prediction(client_id):
     data = {"client_id": client_id}
     try:
@@ -97,9 +112,8 @@ def main():
                 
                 # Affichage du SHAP summary plot
                 st.subheader("SHAP Summary Plot")
-                train_data = pd.read_csv('train_mean_sample.csv').drop(['TARGET'], axis=1)
-                shap_values_global = explainer(train_data)
-                shap.summary_plot(shap_values_global.values, train_data, show=False)
+                shap_values_global = explainer(X_train_scaled)  # Utiliser les données déjà normalisées
+                shap.summary_plot(shap_values_global.values, X_train, show=False)
                 st.pyplot(plt.gcf())
 
 if __name__ == '__main__':
