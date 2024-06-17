@@ -97,7 +97,7 @@ def main():
                 
                 # Affichage du SHAP summary plot
                 st.subheader("SHAP Summary Plot")
-                train_data = pd.read_csv('train_mean_sample.csv').drop(['TARGET', 'client_id'], axis=1)
+                train_data = pd.read_csv('train_mean_sample.csv').drop(['TARGET'], axis=1)
                 shap_values_global = explainer(train_data)
                 shap.summary_plot(shap_values_global.values, train_data, show=False)
                 st.pyplot(plt.gcf())
