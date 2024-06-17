@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import requests
 import plotly.express as px
+import shap
+import matplotlib.pyplot as plt
 
 # Local API URL
 #API_URL = 'http://127.0.0.1:8000'
@@ -92,20 +94,13 @@ def main():
             if shap_values:
                 st.write("Valeurs SHAP pour ce client :")
                 st.json(shap_values)
-                # Comparaison avec l'importance globale
-                st.subheader("Comparaison avec l'importance globale")
-                response = requests.get(f"{API_URL}/global_shap_values")
-                if response.status_code == 200:
-                    global_shap_values = response.json().get("global_shap_values")
-                    comparison_df = pd.DataFrame({
-                        'Feature': list(global_shap_values.keys()),
-                        'Global SHAP': list(global_shap_values.values()),
-                        'Client SHAP': [shap_values.get(k, 0) for k in global_shap_values.keys()]
-                    })
-                    comparison_fig = px.bar(comparison_df, x='Feature', y=['Global SHAP', 'Client SHAP'], title='Comparaison des SHAP values')
-                    st.plotly_chart(comparison_fig)
-                else:
-                    st.error(f"Erreur lors de l'obtention des valeurs SHAP globales: {response.text}")
+                
+                # Affichage du SHAP summary plot
+                st.subheader("SHAP Summary Plot")
+                train_data = pd.read_csv('train_mean_sample.csv').drop(['TARGET', 'client_id'], axis=1)
+                shap_values_global = explainer(train_data)
+                shap.summary_plot(shap_values_global.values, train_data, show=False)
+                st.pyplot(plt.gcf())
 
 if __name__ == '__main__':
     main()
