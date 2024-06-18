@@ -36,14 +36,19 @@ def update_client_info(client_id, data):
         st.error(f"Erreur lors de la mise à jour des informations du client: {response.text}")
         return False
         
-def get_shap_values(client_id):
-    response = requests.get(f"{API_URL}/shap_values/{client_id}")
+def get_shap_values_local(client_id):
+    response = requests.get(f"{API_URL}/shaplocal/{client_id}")
     if response.status_code == 200:
-        return response.json().get("shap_values")
+        return response.json()
     else:
         st.error(f"Erreur lors de l'obtention des valeurs SHAP: {response.text}")
         return None
-        
+
+def st_shap(plot, height=None):
+    """ Helper function to display a SHAP plot in Streamlit """
+    shap_html = f"<head>{shap.getjs()}</head><body>{plot.html()}</body>"
+    st.components.v1.html(shap_html, height=height)
+    
 def main():
     st.title("Prédiction de remboursement de prêt")
 
@@ -90,18 +95,20 @@ def main():
                             
             # Affichage des SHAP values
             st.subheader("SHAP Values")
-            shap_values = get_shap_values(client_id)
-            if shap_values:
+            shap_values_local = get_shap_values_local(client_id)
+            if shap_values_local:
                 st.write("Valeurs SHAP pour ce client :")
-                st.json(shap_values)
-            
-            # Affichage du SHAP summary plot
-            st.subheader("SHAP Summary Plot")
-            train_data = pd.read_csv('train_mean_sample.csv').drop(['TARGET'], axis=1)
-            shap_values_global = explainer(train_data)
-            shap.summary_plot(shap_values_global.values, train_data, show=False)
-            st.pyplot(plt.gcf())
-
+                st.json(shap_values_local)
+                shap_values = shap_values_local['shap_values']
+                base_value = shap_values_local['base_value']
+                data = shap_values_local['data']
+                feature_names = shap_values_local['feature_names']
+                
+                # Create a SHAP force plot
+                shap.initjs()
+                shap_values_obj = shap.Explanation(values=shap_values, base_values=base_value, data=data, feature_names=feature_names)
+                st_shap(shap.force_plot(base_value, shap_values, data, feature_names=feature_names))
+    
 if __name__ == '__main__':
     main()
 
