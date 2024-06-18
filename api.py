@@ -107,11 +107,15 @@ def get_shap_values(client_id):
     # Appliquer les transformations
     info_client_scaled = scaler.transform(info_client)
     
-    # Obtenir les valeurs SHAP pour le client
-    shap_values = explainer(info_client_scaled, check_additivity=False)
-    shap_values_dict = dict(zip(info_client.columns, shap_values.values[0]))
+     # Obtenir les valeurs SHAP pour le client
+    shap_val = explainer(info_client_scaled)[0]
     
-    return jsonify({"shap_values": shap_values_dict})
+    return {
+        'shap_values': shap_val.values.tolist(),
+        'base_value': shap_val.base_values.tolist(),
+        'data': info_client.values.tolist(),
+        'feature_names': info_client.columns.tolist()
+    }
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000, debug=True)
