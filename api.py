@@ -108,7 +108,7 @@ def get_shap_values(client_id):
     info_client_scaled = scaler.transform(info_client)
     
      # Obtenir les valeurs SHAP pour le client
-    shap_val = explainer(info_client_scaled)[0]
+    shap_val = explainer(info_client_scaled, check_additivity=False)[0]
     
     return {
         'shap_values': shap_val.values.tolist(),
