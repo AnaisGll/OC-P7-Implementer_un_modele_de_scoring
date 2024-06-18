@@ -105,7 +105,6 @@ def main():
                 feature_names = shap_values_local['feature_names']
                 
                 # Create a SHAP force plot
-                shap.initjs()
                 shap_values_obj = shap.Explanation(values=shap_values, base_values=base_value, data=data, feature_names=feature_names)
                 st_shap(shap.force_plot(base_value, shap_values, data, feature_names=feature_names))
 
