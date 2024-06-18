@@ -37,7 +37,7 @@ def update_client_info(client_id, data):
         return False
         
 def get_shap_values_local(client_id):
-    response = requests.get(f"{API_URL}/shaplocal/{client_id}")
+    response = requests.get(f"{API_URL}/shap_values/{client_id}")
     if response.status_code == 200:
         return response.json()
     else:
