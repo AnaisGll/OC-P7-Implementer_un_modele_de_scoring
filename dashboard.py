@@ -93,7 +93,7 @@ def main():
                         else:
                             st.error("Le prêt est refusé.")
                             
-             # Affichage des SHAP values
+              # Affichage des SHAP values
             st.subheader("SHAP Values")
             shap_values_local = get_shap_values_local(client_id)
             if shap_values_local:
@@ -103,19 +103,24 @@ def main():
                     base_value = shap_values_local['base_value']
                     data = shap_values_local['data'][0]  # Prendre la première ligne des données du client
                     feature_names = shap_values_local['feature_names']
-                    
+
                     # Create a SHAP force plot
+                    shap.initjs()
                     shap_values_obj = shap.Explanation(values=shap_values, base_values=base_value, data=data, feature_names=feature_names)
                     st_shap(shap.force_plot(base_value, shap_values, data, feature_names=feature_names))
 
                 # Create a summary plot with the top 10 selected features
-                st.write(f"Summary Plot des 10 variables les plus importantes")
+                st.write("Summary Plot des 10 variables les plus importantes")
                 shap_values_df = pd.DataFrame({
                     'shap_values': shap_values,
                     'feature_names': feature_names
                 })
                 top_features = shap_values_df.nlargest(10, 'shap_values')['feature_names']
-                shap.summary_plot(shap_values_obj[:, top_features], plot_type="bar")
+                
+                # Using matplotlib to create the summary plot
+                fig, ax = plt.subplots()
+                shap.summary_plot(shap_values_obj[:, top_features], plot_type="bar", show=False)
+                st.pyplot(fig)
     
 if __name__ == '__main__':
     main()
