@@ -5,6 +5,9 @@ import shap
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 from lightgbm import LGBMClassifier
+import matplotlib.pyplot as plt
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -107,15 +110,42 @@ def get_shap_values(client_id):
     # Appliquer les transformations
     info_client_scaled = scaler.transform(info_client)
     
-     # Obtenir les valeurs SHAP pour le client
+    # Obtenir les valeurs SHAP pour le client
     shap_val = explainer(info_client_scaled, check_additivity=False)[0]
+
+    # Création du graphique SHAP summary plot
+    shap_values_df = pd.DataFrame({
+        'shap_values': shap_val.values,
+        'feature_names': info_client.columns
+    })
+
+    # Trier les features par valeur absolue SHAP et sélectionner les 10 premières
+    top_features_df = shap_values_df.reindex(shap_values_df.shap_values.abs().nlargest(10).index)
+    top_features = top_features_df['feature_names'].values
+
+    # Filtrer les valeurs SHAP et les noms des features pour les top features
+    top_shap_values = top_features_df['shap_values'].values
+    top_data = [info_client.values[0][info_client.columns.get_loc(feat)] for feat in top_features]
+
+    # Générer le graphique SHAP summary plot
+    fig, ax = plt.subplots()
+    shap.summary_plot(shap.Explanation(values=top_shap_values, base_values=shap_val.base_values[0], data=[top_data], feature_names=top_features), plot_type="bar", show=False, ax=ax)
+    plt.tight_layout()
+
+    # Sauvegarder l'image en mémoire
+    buf = BytesIO()
+    fig.savefig(buf, format='png')
+    buf.seek(0)
+    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    plt.close(fig)
     
-    return {
+    return jsonify({
         'shap_values': shap_val.values.tolist(),
         'base_value': shap_val.base_values.tolist(),
         'data': info_client.values.tolist(),
-        'feature_names': info_client.columns.tolist()
-    }
+        'feature_names': info_client.columns.tolist(),
+        'shap_plot': image_base64
+    })
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000, debug=True)
