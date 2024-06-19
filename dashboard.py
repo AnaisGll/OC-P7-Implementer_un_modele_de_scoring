@@ -5,6 +5,9 @@ import plotly.express as px
 import shap
 import matplotlib.pyplot as plt
 import IPython
+from PIL import Image
+import io
+import base64
 
 # Local API URL
 #API_URL = 'http://127.0.0.1:8000'
@@ -94,41 +97,28 @@ def main():
                         else:
                             st.error("Le prêt est refusé.")
 
-            # Affichage des SHAP values
-            st.subheader("SHAP Values")
-            shap_values_local = get_shap_values_local(client_id)
-            if shap_values_local:
-                with st.expander("Voir les valeurs SHAP pour ce client"):
-                    st.json(shap_values_local)
-                    shap_values = shap_values_local['shap_values']
-                    base_value = shap_values_local['base_value']
-                    data = shap_values_local['data'][0]  # Prendre la première ligne des données du client
-                    feature_names = shap_values_local['feature_names']
+             # Affichage des SHAP values
+        st.subheader("SHAP Values")
+        shap_values_local = get_shap_values_local(client_id)
+        if shap_values_local:
+            with st.expander("Voir les valeurs SHAP pour ce client"):
+                st.json(shap_values_local)
+                shap_values = shap_values_local['shap_values']
+                base_value = shap_values_local['base_value']
+                data = shap_values_local['data'][0]  # Prendre la première ligne des données du client
+                feature_names = shap_values_local['feature_names']
 
-                    # Create a SHAP force plot
-                    shap.initjs()
-                    shap_values_obj = shap.Explanation(values=shap_values, base_values=base_value, data=data, feature_names=feature_names)
-                    st_shap(shap.force_plot(base_value, shap_values, data, feature_names=feature_names))
+                # Create a SHAP force plot
+                shap.initjs()
+                shap_values_obj = shap.Explanation(values=shap_values, base_values=base_value, data=data, feature_names=feature_names)
+                st_shap(shap.force_plot(base_value, shap_values, data, feature_names=feature_names))
 
-                # Create a summary plot with the top 10 selected features
-                st.write("Summary Plot des 10 variables les plus importantes")
-                shap_values_df = pd.DataFrame({
-                    'shap_values': shap_values,
-                    'feature_names': feature_names
-                })
-
-                # Sort features by absolute SHAP value and select the top 10
-                top_features_df = shap_values_df.reindex(shap_values_df.shap_values.abs().nlargest(10).index)
-                top_features = top_features_df['feature_names'].values
-
-                # Filter the SHAP values and feature names for the top features
-                top_shap_values = top_features_df['shap_values'].values
-                top_data = [data[feature_names.index(feat)] for feat in top_features]
-
-                # Create the SHAP summary plot
-                fig, ax = plt.subplots()
-                shap.summary_plot(shap.Explanation(values=top_shap_values, base_values=base_value, data=[top_data], feature_names=top_features), plot_type="bar", show=False, ax=ax)
-                st.pyplot(fig)
+            # Affichage du graphique SHAP summary plot
+            if 'shap_plot' in shap_values_local:
+                shap_plot_base64 = shap_values_local['shap_plot']
+                shap_plot_bytes = base64.b64decode(shap_plot_base64)
+                shap_plot_image = Image.open(io.BytesIO(shap_plot_bytes))
+                st.image(shap_plot_image, caption='SHAP Summary Plot', use_column_width=True)
 
 if __name__ == '__main__':
     main()
