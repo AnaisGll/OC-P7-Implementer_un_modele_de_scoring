@@ -48,7 +48,7 @@ def st_shap(plot, height=None):
     """ Helper function to display a SHAP plot in Streamlit """
     shap_html = f"<head>{shap.getjs()}</head><body>{plot.html()}</body>"
     st.components.v1.html(shap_html, height=height)
-    
+
 def main():
     st.title("Prédiction de remboursement de prêt")
 
@@ -81,7 +81,7 @@ def main():
                 fig = px.histogram(train_data, x=feature, title=f"Distribution de {feature}")
                 fig.add_vline(x=float(client_info[feature]), line_dash="dash", line_color="red", annotation_text="Client")
                 st.plotly_chart(fig)
-                
+
             if st.button('Mettre à jour les informations'):
                 if update_client_info(client_id, update_data):
                     prediction = get_prediction(client_id)
@@ -92,8 +92,8 @@ def main():
                             st.success("Le prêt est approuvé.")
                         else:
                             st.error("Le prêt est refusé.")
-                            
-              # Affichage des SHAP values
+
+            # Affichage des SHAP values
             st.subheader("SHAP Values")
             shap_values_local = get_shap_values_local(client_id)
             if shap_values_local:
@@ -115,12 +115,19 @@ def main():
                     'shap_values': shap_values,
                     'feature_names': feature_names
                 })
-                top_features = shap_values_df.nlargest(10, 'shap_values')['feature_names']
-                
-                # Using matplotlib to create the summary plot
+
+                # Sort features by absolute SHAP value and select the top 10
+                top_features_df = shap_values_df.reindex(shap_values_df.shap_values.abs().nlargest(10).index)
+                top_features = top_features_df['feature_names'].values
+
+                # Filter the SHAP values and feature names for the top features
+                top_shap_values = top_features_df['shap_values'].values
+                top_data = [data[feature_names.index(feat)] for feat in top_features]
+
+                # Create the SHAP summary plot
                 fig, ax = plt.subplots()
-                shap.summary_plot(shap_values_obj[:, top_features], plot_type="bar", show=False)
+                shap.summary_plot(shap.Explanation(values=top_shap_values, base_values=base_value, data=[top_data], feature_names=top_features), plot_type="bar", show=False, ax=ax)
                 st.pyplot(fig)
-    
+
 if __name__ == '__main__':
     main()
