@@ -4,6 +4,7 @@ import requests
 import plotly.express as px
 import shap
 import matplotlib.pyplot as plt
+import IPython
 
 # Local API URL
 #API_URL = 'http://127.0.0.1:8000'
