@@ -40,18 +40,19 @@ def update_client_info(client_id, data):
         st.error(f"Erreur lors de la mise à jour des informations du client: {response.text}")
         return False
         
-def get_shap_values_local(client_id):
-    response = requests.get(f"{API_URL}/shap_values/{client_id}")
-    if response.status_code == 200:
-        return response.json()
-    else:
-        st.error(f"Erreur lors de l'obtention des valeurs SHAP: {response.text}")
+def get_shap_summary_plot(client_id):
+    try:
+        response = requests.get(f"{API_URL}/shap_summary_plot/{client_id}")
+        response.raise_for_status()
+        shap_plot_data = response.json().get("shap_summary_plot")
+        if shap_plot_data:
+            return base64.b64decode(shap_plot_data)
+        else:
+            st.error("Erreur lors de la génération du SHAP summary plot.")
+            return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur lors de l'obtention du SHAP summary plot: {e}")
         return None
-
-def st_shap(plot, height=None):
-    """ Helper function to display a SHAP plot in Streamlit """
-    shap_html = f"<head>{shap.getjs()}</head><body>{plot.html()}</body>"
-    st.components.v1.html(shap_html, height=height)
 
 def main():
     st.title("Prédiction de remboursement de prêt")
@@ -67,7 +68,14 @@ def main():
                 st.success("Le prêt est approuvé.")
             else:
                 st.error("Le prêt est refusé.")
-
+                
+            # Obtenir et afficher le SHAP summary plot
+            shap_summary_plot_data = get_shap_summary_plot(client_id)
+            if shap_summary_plot_data:
+                st.subheader("SHAP Summary Plot des 10 caractéristiques les plus impactantes")
+                image = Image.open(io.BytesIO(shap_summary_plot_data))
+                st.image(image, use_column_width=True)
+                
     if client_id:
         client_info = get_client_info(client_id)
         if client_info:
@@ -96,29 +104,6 @@ def main():
                             st.success("Le prêt est approuvé.")
                         else:
                             st.error("Le prêt est refusé.")
-
-             # Affichage des SHAP values
-        st.subheader("SHAP Values")
-        shap_values_local = get_shap_values_local(client_id)
-        if shap_values_local:
-            with st.expander("Voir les valeurs SHAP pour ce client"):
-                st.json(shap_values_local)
-                shap_values = shap_values_local['shap_values']
-                base_value = shap_values_local['base_value']
-                data = shap_values_local['data'][0]  # Prendre la première ligne des données du client
-                feature_names = shap_values_local['feature_names']
-
-                # Create a SHAP force plot
-                shap.initjs()
-                shap_values_obj = shap.Explanation(values=shap_values, base_values=base_value, data=data, feature_names=feature_names)
-                st_shap(shap.force_plot(base_value, shap_values, data, feature_names=feature_names))
-
-            # Affichage du graphique SHAP summary plot
-            if 'shap_plot' in shap_values_local:
-                shap_plot_base64 = shap_values_local['shap_plot']
-                shap_plot_bytes = base64.b64decode(shap_plot_base64)
-                shap_plot_image = Image.open(io.BytesIO(shap_plot_bytes))
-                st.image(shap_plot_image, caption='SHAP Summary Plot', use_column_width=True)
 
 if __name__ == '__main__':
     main()
