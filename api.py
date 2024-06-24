@@ -107,7 +107,7 @@ def shap_summary_plot(client_id):
     info_client = client_data.drop('client_id', axis=1)
     info_client_scaled = scaler.transform(info_client)
 
-    shap_values = explainer(info_client_scaled)
+    shap_values = explainer(info_client_scaled, check_additivity=False)
     shap.summary_plot(shap_values.values, info_client, plot_type="bar", max_display=10)
     
     # Sauvegarder le plot en tant qu'image dans un buffer
