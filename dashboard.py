@@ -54,6 +54,15 @@ def get_shap_summary_plot(client_id):
         st.error(f"Erreur lors de l'obtention du SHAP summary plot: {e}")
         return None
 
+def get_global_feature_importance():
+    try:
+        response = requests.get(f"{API_URL}/global_feature_importance")
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur lors de l'obtention de la feature importance globale: {e}")
+        return None
+        
 def main():
     st.title("Prédiction de remboursement de prêt")
 
@@ -76,6 +85,29 @@ def main():
                 image = Image.open(io.BytesIO(shap_summary_plot_data))
                 st.image(image, use_column_width=True)
                 
+            # Obtenir et afficher la feature importance globale
+            global_feature_importance = get_global_feature_importance()
+            if global_feature_importance:
+                st.subheader("Feature Importance Globale")
+                global_importance_df = pd.DataFrame(list(global_feature_importance.items()), columns=['feature', 'importance'])
+                st.write(global_importance_df)
+
+                # Comparer avec la feature importance locale
+                response = requests.get(f"{API_URL}/client_info/{client_id}")
+                if response.status_code == 200:
+                    client_data = response.json()
+                    client_data = pd.DataFrame([client_data])
+                    client_data_scaled = scaler.transform(client_data.drop('client_id', axis=1))
+                    local_shap_values = explainer(client_data_scaled, check_additivity=False)
+                    local_feature_importance = pd.DataFrame(list(zip(client_data.columns[:-1], np.abs(local_shap_values.values[0]))), columns=['feature', 'importance']).sort_values(by='importance', ascending=False)
+
+                    st.subheader("Comparaison des importances des features")
+                    fig_global = px.bar(global_importance_df, x='feature', y='importance', title="Feature Importance Globale")
+                    st.plotly_chart(fig_global)
+
+                    fig_local = px.bar(local_feature_importance.head(10), x='feature', y='importance', title="Feature Importance Locale (Top 10)")
+                    st.plotly_chart(fig_local)    
+                    
     if client_id:
         client_info = get_client_info(client_id)
         if client_info:
