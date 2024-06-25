@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
+import numpy as np
 import shap
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
@@ -8,6 +9,7 @@ from lightgbm import LGBMClassifier
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
+import plotly.express as px
 
 app = Flask(__name__)
 
