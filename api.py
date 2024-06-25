@@ -37,6 +37,11 @@ model.fit(X_train_resampled, y_train_resampled)
 # Créer un explainer SHAP basé sur le modèle entraîné
 explainer = shap.Explainer(model, X_train_scaled)
 
+# Calcul de la feature importance globale
+shap_values_train = explainer(X_train_scaled, check_additivity=False)
+global_shap_values = np.abs(shap_values_train.values).mean(axis=0)
+global_shap_importance = pd.DataFrame(list(zip(X_train.columns, global_shap_values)), columns=['feature', 'importance']).sort_values(by='importance', ascending=False)
+
 @app.route('/')
 def home():
     return 'API pour prédire l\'accord d\'un prêt'
@@ -118,6 +123,10 @@ def shap_summary_plot(client_id):
     image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
     return jsonify({"shap_summary_plot": image_base64})
 
+@app.route('/global_feature_importance', methods=['GET'])
+def global_feature_importance():
+    global_shap_importance_dict = global_shap_importance.set_index('feature')['importance'].to_dict()
+    return jsonify(global_shap_importance_dict)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000, debug=True)
