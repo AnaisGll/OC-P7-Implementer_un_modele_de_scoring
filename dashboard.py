@@ -84,13 +84,6 @@ def main():
                 st.subheader("SHAP Summary Plot des 10 caractéristiques les plus impactantes")
                 image = Image.open(io.BytesIO(shap_summary_plot_data))
                 st.image(image, use_column_width=True)
-                
-            # Obtenir et afficher la feature importance globale
-            global_feature_importance = get_global_feature_importance()
-            if global_feature_importance:
-                st.subheader("Feature Importance Globale")
-                global_importance_df = pd.DataFrame(list(global_feature_importance.items()), columns=['feature', 'importance'])
-                st.write(global_importance_df)
 
                 # Comparer avec la feature importance locale
                 response = requests.get(f"{API_URL}/client_info/{client_id}")
@@ -107,7 +100,13 @@ def main():
 
                     fig_local = px.bar(local_feature_importance.head(10), x='feature', y='importance', title="Feature Importance Locale (Top 10)")
                     st.plotly_chart(fig_local)    
-                    
+
+             # Obtenir et afficher la feature importance globale
+            global_feature_importance = get_global_feature_importance()
+            if global_feature_importance:
+                st.subheader("Feature Importance Globale")
+                global_importance_df = pd.DataFrame(list(global_feature_importance.items()), columns=['feature', 'importance'])
+                st.write(global_importance_df)
     if client_id:
         client_info = get_client_info(client_id)
         if client_info:
@@ -125,6 +124,14 @@ def main():
                 fig = px.histogram(train_data, x=feature, title=f"Distribution de {feature}")
                 fig.add_vline(x=float(client_info[feature]), line_dash="dash", line_color="red", annotation_text="Client")
                 st.plotly_chart(fig)
+
+            feature1 = st.selectbox("Sélectionnez la première variable pour l'analyse bi-variée", options=client_info.keys())
+            feature2 = st.selectbox("Sélectionnez la deuxième variable pour l'analyse bi-variée", options=client_info.keys())
+
+            if feature1 and feature2:
+                st.subheader(f"Analyse bi-variée entre {feature1} et {feature2}")
+                fig_bivariate = px.scatter(train_data, x=feature1, y=feature2, title=f"Analyse bi-variée entre {feature1} et {feature2}")
+                st.plotly_chart(fig_bivariate)
 
             if st.button('Mettre à jour les informations'):
                 if update_client_info(client_id, update_data):
