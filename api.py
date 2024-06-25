@@ -130,6 +130,22 @@ def global_feature_importance():
     global_shap_importance_dict = global_shap_importance.set_index('feature')['importance'].to_dict()
     return jsonify(global_shap_importance_dict)
 
+@app.route('/local_feature_importance/<int:client_id>', methods=['GET'])
+def local_feature_importance(client_id):
+    client_data = test_data[test_data['client_id'] == client_id]
+    if client_data.empty:
+        return jsonify({"error": "Client not found"}), 404
+
+    info_client = client_data.drop('client_id', axis=1)
+    info_client_scaled = scaler.transform(info_client)
+
+    shap_values = explainer(info_client_scaled, check_additivity=False)
+    local_shap_values = np.abs(shap_values.values[0])
+    local_shap_importance = pd.DataFrame(list(zip(info_client.columns, local_shap_values)), columns=['feature', 'importance']).sort_values(by='importance', ascending=False)
+
+    local_shap_importance_dict = local_shap_importance.set_index('feature')['importance'].to_dict()
+    return jsonify(local_shap_importance_dict)
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000, debug=True)
 
