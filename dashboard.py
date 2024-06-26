@@ -100,7 +100,7 @@ def main():
             if global_feature_importance:
                 st.subheader("Feature Importance Globale")
                 global_importance_df = pd.DataFrame(list(global_feature_importance.items()), columns=['feature', 'importance'])
-                fig_global = px.bar(global_importance_df, x='feature', y='importance', title="Feature Importance Globale")
+                fig_global = px.bar(global_importance_df, x='feature', y='importance', title="Feature Importance Globale (Top 10)")
                 st.plotly_chart(fig_global)
                 
     if client_id:
