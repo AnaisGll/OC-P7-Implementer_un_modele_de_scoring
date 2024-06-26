@@ -127,7 +127,8 @@ def shap_summary_plot(client_id):
 
 @app.route('/global_feature_importance', methods=['GET'])
 def global_feature_importance():
-    global_shap_importance_dict = global_shap_importance.set_index('feature')['importance'].to_dict()
+    top_10_global_shap_importance = global_shap_importance.head(10)
+    global_shap_importance_dict = top_10_global_shap_importance.set_index('feature')['importance'].to_dict()
     return jsonify(global_shap_importance_dict)
 
 @app.route('/local_feature_importance/<int:client_id>', methods=['GET'])
