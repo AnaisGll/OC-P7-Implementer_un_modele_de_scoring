@@ -98,10 +98,10 @@ def main():
             # Obtenir et afficher l'importance des caractéristiques globales
             global_feature_importance = get_global_feature_importance()
             if global_feature_importance:
-                st.subheader("Feature Importance Globale (Top 10)")
+                st.subheader("Feature Importance Globale")
                 global_importance_df = pd.DataFrame(global_feature_importance.items(), columns=['feature', 'importance'])
                 global_importance_df['importance'] = global_importance_df['importance'].astype(float)  # Assurez-vous que 'importance' est de type float
-                fig_global = px.bar(global_importance_df.head(10), x='feature', y='importance', title="Feature Importance Globale (Top 10)")
+                fig_global = px.bar(global_importance_df.head(10), x='feature', y='importance', title="Feature Importance Globale")
                 st.plotly_chart(fig_global)
 
                 
