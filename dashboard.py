@@ -2,17 +2,15 @@ import streamlit as st
 import pandas as pd
 import requests
 import plotly.express as px
-import shap
-import matplotlib.pyplot as plt
-import IPython
 from PIL import Image
 import io
 import base64
 
 # Local API URL
-#API_URL = 'http://127.0.0.1:8000'
+# API_URL = 'http://127.0.0.1:8000'
 API_URL = 'https://pret-a-depenser.azurewebsites.net'
 
+# Fonction pour obtenir la prédiction
 def get_prediction(client_id):
     data = {"client_id": client_id}
     try:
@@ -23,6 +21,7 @@ def get_prediction(client_id):
         st.error(f"Erreur lors de l'obtention de la prédiction: {e}")
         return None
 
+# Fonction pour obtenir les informations du client
 def get_client_info(client_id):
     response = requests.get(f"{API_URL}/client_info/{client_id}")
     if response.status_code == 200:
@@ -31,6 +30,7 @@ def get_client_info(client_id):
         st.error(f"Erreur lors de l'obtention des informations du client: {response.text}")
         return None
 
+# Fonction pour mettre à jour les informations du client
 def update_client_info(client_id, data):
     response = requests.put(f"{API_URL}/client_info/{client_id}", json=data)
     if response.status_code == 200:
@@ -39,7 +39,8 @@ def update_client_info(client_id, data):
     else:
         st.error(f"Erreur lors de la mise à jour des informations du client: {response.text}")
         return False
-        
+
+# Fonction pour obtenir le SHAP summary plot
 def get_shap_summary_plot(client_id):
     try:
         response = requests.get(f"{API_URL}/shap_summary_plot/{client_id}")
@@ -54,6 +55,7 @@ def get_shap_summary_plot(client_id):
         st.error(f"Erreur lors de l'obtention du SHAP summary plot: {e}")
         return None
 
+# Fonction pour obtenir l'importance des caractéristiques globales
 def get_global_feature_importance():
     try:
         response = requests.get(f"{API_URL}/global_feature_importance")
@@ -63,6 +65,7 @@ def get_global_feature_importance():
         st.error(f"Erreur lors de l'obtention de la feature importance globale: {e}")
         return None
 
+# Fonction pour obtenir l'importance des caractéristiques locales
 def get_local_feature_importance(client_id):
     try:
         response = requests.get(f"{API_URL}/local_feature_importance/{client_id}")
@@ -71,8 +74,10 @@ def get_local_feature_importance(client_id):
     except requests.exceptions.RequestException as e:
         st.error(f"Erreur lors de l'obtention de la feature importance locale: {e}")
         return None
-        
+
 def main():
+    # Titre de la page
+    st.set_page_config(page_title="Prédiction de remboursement de prêt")
     st.title("Prédiction de remboursement de prêt")
 
     client_id = st.number_input("Entrez l'ID du client", min_value=1, step=1)
@@ -93,18 +98,23 @@ def main():
                 st.subheader("Importance des caractéristiques locales")
                 local_importance_df = pd.DataFrame(list(local_feature_importance.items()), columns=['feature', 'importance'])
                 fig_local = px.bar(local_importance_df.head(10), x='feature', y='importance', title="Feature Importance Locale (Top 10)")
-                st.plotly_chart(fig_local)
+                fig_local.update_layout(title_text='Feature Importance Locale (Top 10)', title_x=0.5)
+                fig_local.update_traces(marker_color='rgb(158,202,225)', marker_line_color='rgb(8,48,107)', marker_line_width=1.5, opacity=0.6)
+                st.plotly_chart(fig_local, use_container_width=True)
+                st.write("Le graphique ci-dessus montre l'importance des différentes caractéristiques locales. Chaque barre représente une caractéristique avec son niveau d'importance.")
 
             # Obtenir et afficher l'importance des caractéristiques globales
             global_feature_importance = get_global_feature_importance()
             if global_feature_importance:
                 st.subheader("Feature Importance Globale")
                 global_importance_df = pd.DataFrame(global_feature_importance.items(), columns=['feature', 'importance'])
-                global_importance_df['importance'] = global_importance_df['importance'].astype(float)  # Assurez-vous que 'importance' est de type float
+                global_importance_df['importance'] = global_importance_df['importance'].astype(float)
                 fig_global = px.bar(global_importance_df.head(10), x='feature', y='importance', title="Feature Importance Globale")
-                st.plotly_chart(fig_global)
+                fig_global.update_layout(title_text='Feature Importance Globale', title_x=0.5)
+                fig_global.update_traces(marker_color='rgb(123,204,196)', marker_line_color='rgb(4,77,51)', marker_line_width=1.5, opacity=0.6)
+                st.plotly_chart(fig_global, use_container_width=True)
+                st.write("Le graphique ci-dessus montre l'importance des différentes caractéristiques globales. Chaque barre représente une caractéristique avec son niveau d'importance.")
 
-                
     if client_id:
         client_info = get_client_info(client_id)
         if client_info:
@@ -121,7 +131,10 @@ def main():
                 train_data = pd.read_csv('train_mean_sample.csv')
                 fig = px.histogram(train_data, x=feature, title=f"Distribution de {feature}")
                 fig.add_vline(x=float(client_info[feature]), line_dash="dash", line_color="red", annotation_text="Client")
-                st.plotly_chart(fig)
+                fig.update_layout(title_text=f"Distribution de {feature}", title_x=0.5)
+                fig.update_traces(marker_color='rgb(246,207,113)', marker_line_color='rgb(205,102,0)', marker_line_width=1.5, opacity=0.6)
+                st.plotly_chart(fig, use_container_width=True)
+                st.write(f"Le graphique ci-dessus montre la distribution de la variable {feature}. La ligne rouge indique la position de ce client.")
 
             feature1 = st.selectbox("Sélectionnez la première variable pour l'analyse bi-variée", options=client_info.keys())
             feature2 = st.selectbox("Sélectionnez la deuxième variable pour l'analyse bi-variée", options=client_info.keys())
@@ -129,7 +142,10 @@ def main():
             if feature1 and feature2:
                 st.subheader(f"Analyse bi-variée entre {feature1} et {feature2}")
                 fig_bivariate = px.scatter(train_data, x=feature1, y=feature2, title=f"Analyse bi-variée entre {feature1} et {feature2}")
-                st.plotly_chart(fig_bivariate)
+                fig_bivariate.update_layout(title_text=f"Analyse bi-variée entre {feature1} et {feature2}", title_x=0.5)
+                fig_bivariate.update_traces(marker_color='rgb(229,152,102)', marker_line_color='rgb(174,49,0)', marker_line_width=1.5, opacity=0.6)
+                st.plotly_chart(fig_bivariate, use_container_width=True)
+                st.write(f"Le graphique ci-dessus montre la relation entre {feature1} et {feature2} pour différents clients. Chaque point représente un client.")
 
             if st.button('Mettre à jour les informations'):
                 if update_client_info(client_id, update_data):
@@ -144,3 +160,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
