@@ -1,4 +1,4 @@
-# OC-P7-Umplémentez-un-modèle-de-scoring
+# OC-P7-Implémentez-un-modèle-de-scoring
 Implémentez un modèle de scoring
 
 ## Contexte
